@@ -1,5 +1,3 @@
-import sys
-
 from board import Board
 
 subject = Board(2, 2)
