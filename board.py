@@ -163,12 +163,16 @@ class Board:
         if not self.valid():
             return None
 
+        def first_blank(subject):
+            for i in range(subject.total_dimension()):
+                for j in range(subject.total_dimension()):
+                    if subject.contents[i][j] == 0:
+                        return [i, j]
+
         updated = Board.copy(self)
-        for i in range(updated.total_dimension()):
-            for j in range(updated.total_dimension()):
-                if updated.contents[i][j] == 0:
-                    x = i
-                    y = j
+        blank = first_blank(updated)
+        x = blank[0]
+        y = blank[1]
 
         for i in range(updated.total_dimension()):
             updated.contents[x][y] = i + 1
