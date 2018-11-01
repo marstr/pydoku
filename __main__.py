@@ -8,3 +8,6 @@ print(subject.solve())
 
 subject = Board()
 print(subject.solve())
+
+subject = Board(3,2)
+print(subject.solve())
