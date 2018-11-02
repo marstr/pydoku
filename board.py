@@ -4,40 +4,47 @@ class Board:
     def __init__(self, width=3, height=3):
         """creates a new empty sudoku board"""
 
-        self.width = width
-        self.height = height
+        self._width = width
+        self._height = height
 
-        self.contents = []
+        self._contents = []
         # Create an empty board by populating each cell with a zero.
-        for i in range(self.total_dimension()):
-            self.contents.append([])
-            for j in range(self.total_dimension()):
-                self.contents[i].append(0)
+        for i in range(self.total_dimension):
+            self._contents.append([])
+            for j in range(self.total_dimension):
+                self._contents[i].append(0)
 
-    @classmethod
-    def copy(cls, other):
-        retval = Board(other.width, other.height)
-        for i in range(retval.total_dimension()):
-            for j in range(retval.total_dimension()):
-                retval.contents[i][j] = other.contents[i][j]
+    def __getitem__(self, item):
+        return self._contents[item]
+
+    def __setitem__(self, key, value):
+        self._contents[key] = value
+
+    def copy(self):
+        """creates an identical instance of this """
+        retval = self.__class__(self._width, self._height)
+        for i in range(retval.total_dimension):
+            for j in range(retval.total_dimension):
+                retval[i][j] = self[i][j]
         return retval
 
+    @property
     def total_dimension(self):
         """returns the size of the whole board instead of a single square."""
-        return self.width * self.height
+        return self._width * self._height
 
     def __str__(self):
         retval = ""
-        character_width = 2 * self.height * (self.width + 1) + 1
-        for i in range(self.total_dimension()):
-            if i % self.height == 0:
+        character_width = 2 * self._height * (self._width + 1) + 1
+        for i in range(self.total_dimension):
+            if i % self._height == 0:
                 for k in range(character_width):
                     retval += '-'
                 retval += '\n'
-            for j in range(self.total_dimension()):
-                if j % self.width == 0:
+            for j in range(self.total_dimension):
+                if j % self._width == 0:
                     retval += '| '
-                retval += str(self.contents[i][j]) + " "
+                retval += str(self[i][j]) + " "
             retval += '|\n'
 
         for k in range(character_width):
@@ -62,7 +69,7 @@ class Board:
         | 8 8 8 | 8 8 8 | 8 8 8 |
         -------------------------
         """
-        return self.contents[n].copy()
+        return self[n].copy()
 
     def column(self, n):
         """returns all values in a given column as seen below on a 9x9 board:
@@ -81,8 +88,8 @@ class Board:
         -------------------------
         """
         retval = []
-        for i in range(self.total_dimension()):
-            retval.append(self.contents[i][n])
+        for i in range(self.total_dimension):
+            retval.append(self._contents[i][n])
         return retval
 
     def square(self, n):
@@ -113,48 +120,35 @@ class Board:
         | 4 4 4 | 5 5 5 |
         -----------------
         """
-        retval = []
-        for i in range(self.height):
-            for j in range(self.width):
-                row = n // self.height * self.height + i
-                col = (n % self.height) * self.width + j
-                retval.append(self.contents[row][col])
-        return retval
-
-    def cell(self, row, column):
-        """returns the value at a particular cell as would be indexed using both row and cell above."""
-        return self.contents[row][column]
+        return [
+            self[n // self._height * self._height + row][n % self._height * self._width + col]
+            for row in range(self._height)
+            for col in range(self._width)]
 
     def _valid_slice(self, subject):
         """determines whether or not any given list has conflicting sudoku values."""
         trimmed = [x for x in subject if x != 0]
 
         # This feels very expressive to me, but could increase GC pressure. Is there a pythonic 'any' function?
-        out_of_bounds = [x for x in trimmed if x > self.width * self.height]
-        if len(out_of_bounds) > 0:
-            return False
+        out_of_bounds = any(x > self.total_dimension for x in trimmed)
 
-        return len(trimmed) == len(set(trimmed))
+        return not out_of_bounds and len(trimmed) == len(set(trimmed))
 
     def valid(self):
         """determines whether or not a Sudoku board has any conflicting values."""
-        for i in range(self.width * self.height):
-            if not (
-                    self._valid_slice(self.row(i)) and
-                    self._valid_slice(self.column(i)) and
-                    self._valid_slice(self.square(i))):
-                return False
-        return True
+        return all([
+            self._valid_slice(self.row(n)) and
+            self._valid_slice(self.column(n)) and
+            self._valid_slice(self.square(n))
+            for n in range(self.total_dimension)])
 
     def complete(self):
         """determines whether or not a Sudoku board is both `valid` and contains no empty cells."""
-        if not self.valid():
-            return False
-        for i in range(self.width * self.height):
-            for j in range(self.width * self.height):
-                if self.contents[i][j] == 0:
-                    return False
-        return True
+        return self.valid() and not any(
+            self[row][col] == 0
+            for row in range(self.total_dimension)
+            for col in range(self.total_dimension)
+        )
 
     def solve(self):
         if self.complete():
@@ -163,20 +157,40 @@ class Board:
         if not self.valid():
             return None
 
-        def first_blank(subject):
-            for i in range(subject.total_dimension()):
-                for j in range(subject.total_dimension()):
-                    if subject.contents[i][j] == 0:
-                        return [i, j]
+        row, col = next(
+            (i, j)
+            for i in range(self.total_dimension)
+            for j in range(self.total_dimension)
+            if self[i][j] == 0)
 
-        updated = Board.copy(self)
-        blank = first_blank(updated)
-        x = blank[0]
-        y = blank[1]
+        updated = self.copy()
 
-        for i in range(updated.total_dimension()):
-            updated.contents[x][y] = i + 1
-            solved = updated.solve()
-            if solved is not None:
-                return solved
-        return None
+        def set_updated(i):
+            updated[row][col] = i
+            return updated
+
+        solutions = (
+            solution
+            for solution in (
+                candidate.solve()
+                for candidate in (
+                    set_updated(i + 1)
+                    for i in range(self.total_dimension)))
+            if solution is not None)
+        return next(solutions, None)
+
+
+def main():
+    subject = Board(2, 2)
+
+    print(subject.solve())
+
+    subject = Board()
+    print(subject.solve())
+
+    subject = Board(3, 2)
+    print(subject.solve())
+
+
+if __name__ == "__main__":
+    main()
