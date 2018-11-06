@@ -87,10 +87,7 @@ class Board:
         | 0 1 2 | 3 4 5 | 6 7 8 |
         -------------------------
         """
-        retval = []
-        for i in range(self.total_dimension):
-            retval.append(self._contents[i][n])
-        return retval
+        return [self[i][n] for i in range(self.total_dimension)]
 
     def square(self, n):
         """returns all values in a given square indexed in row major fashion as seen below on a 9x9 board:
@@ -151,6 +148,9 @@ class Board:
         )
 
     def solve(self):
+        """finds a board where by only adding values to this board, all spaces are filled and there are no conflicting
+        squares.
+        """
         if self.complete():
             return self
 
@@ -165,32 +165,11 @@ class Board:
 
         updated = self.copy()
 
-        def set_updated(i):
-            updated[row][col] = i
-            return updated
+        for i in range(self.total_dimension):
+            updated[row][col] = i + 1
+            candidate = updated.solve()
+            if candidate is not None:
+                return candidate
 
-        solutions = (
-            solution
-            for solution in (
-                candidate.solve()
-                for candidate in (
-                    set_updated(i + 1)
-                    for i in range(self.total_dimension)))
-            if solution is not None)
-        return next(solutions, None)
+        return None
 
-
-def main():
-    subject = Board(2, 2)
-
-    print(subject.solve())
-
-    subject = Board()
-    print(subject.solve())
-
-    subject = Board(3, 2)
-    print(subject.solve())
-
-
-if __name__ == "__main__":
-    main()
