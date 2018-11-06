@@ -8,4 +8,4 @@ setup(name='pydoku',
       author_email='martin.strobel@live.com',
       license='MIT',
       packages=['pydoku'],
-      zip_safe=False)
+      zip_safe=True)
