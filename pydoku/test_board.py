@@ -1,4 +1,4 @@
-import board
+from pydoku import board
 
 
 def test_row():
