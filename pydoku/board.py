@@ -33,6 +33,15 @@ class Board:
         """returns the size of the whole board instead of a single square."""
         return self._width * self._height
 
+    def __repr__(self):
+        retval = str(self._width) + 'x' + str(self._height) + '\n'
+
+        for i in range(self.total_dimension):
+            for j in range(self.total_dimension):
+                retval += str(self[i][j]) + ' '
+            retval += '\n'
+        return retval
+
     def __str__(self):
         retval = ""
         character_width = 2 * self._height * (self._width + 1) + 1
@@ -44,7 +53,7 @@ class Board:
             for j in range(self.total_dimension):
                 if j % self._width == 0:
                     retval += '| '
-                retval += str(self[i][j]) + " "
+                retval += str(self[i][j]) + ' '
             retval += '|\n'
 
         for k in range(character_width):

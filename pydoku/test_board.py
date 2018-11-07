@@ -95,3 +95,20 @@ def test_solve():
     solved = empty.solve()
     assert solved is not None
     assert solved.complete()
+
+
+def test___repr__():
+    subject = board.Board()
+    got = repr(subject)
+    want = """3x3
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 
+"""
+    assert got == want
